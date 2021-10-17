@@ -1,40 +1,49 @@
 package file
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 
 	key_value "github.com/cemezgn/keyValueApp/pkg/key-value"
 )
 
-func Read()  {
-	// Open our jsonFile
+func Read() *key_value.DataStore{
+
+	var items []key_value.Item
+
 	jsonFile, err := os.Open("data.json")
-	// if we os.Open returns an error then handle it
+
 	if err != nil {
 		fmt.Println(err)
 	}
 	fmt.Println("Successfully Opened data.json")
-	// defer the closing of our jsonFile so that we can parse it later on
+
 	defer jsonFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, err := ioutil.ReadAll(jsonFile)
 
-	// we initialize our Users array
-	var items key_value.Items
+	err = json.Unmarshal(byteValue, &items)
 
-	// we unmarshal our byteArray which contains our
-	// jsonFile's content into 'users' which we defined above
-	json.Unmarshal(byteValue, &items)
-
-	// we iterate through every user within our users array and
-	// print out the user Type, their name, and their facebook url
-	// as just an example
-	for i := 0; i < len(items.Items); i++ {
-
+	if err != nil {
+		fmt.Println(err)
 	}
 
+	itemList := make(map[string]key_value.Item, len(items))
+
+	for _, v := range items {
+		itemList[v.Key] = v
+	}
+
+	rest, _ := json.Marshal(itemList)
+	fmt.Println(bytes.NewBuffer(rest))
+
+	return &key_value.DataStore{
+		M:       itemList,
+		RWMutex: &sync.RWMutex{},
+	}
 
 }

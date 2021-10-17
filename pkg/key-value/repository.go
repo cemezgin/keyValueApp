@@ -24,6 +24,7 @@ func NewRepository(store *DataStore) *Repository {
 func (rp *Repository) List() ([]byte, error){
 	rp.Store.RLock()
 	items := make([]Item, 0, len(rp.Store.M))
+
 	for _, v := range rp.Store.M {
 		items = append(items, v)
 	}
