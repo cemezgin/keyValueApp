@@ -9,7 +9,7 @@ import (
 )
 
 func Run(repository *key_value.Repository)  {
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 	quit := make(chan struct{})
 	go func() {
 		for {

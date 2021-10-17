@@ -2,6 +2,7 @@ package key_value
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -21,7 +22,7 @@ type Service struct {
 type KeyValueRepository interface {
 	List() ([]byte, error)
 	Get(value string) (Item, bool)
-	Create(w http.ResponseWriter, r *http.Request)
+	Create(i Item) ([]byte, error)
 }
 
 func NewService(repository KeyValueRepository) *Service {
@@ -32,7 +33,7 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	switch {
 	case r.Method == http.MethodGet && listKeysRequest.MatchString(r.URL.Path):
-		s.List(w)
+		s.List(w, r)
 		return
 	case r.Method == http.MethodGet && getKeysRequest.MatchString(r.URL.Path):
 		s.Get(w, r)
@@ -46,7 +47,7 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Service) List(w http.ResponseWriter) {
+func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 	jsonBytes, err := s.Repository.List()
 
 	if err != nil {
@@ -54,6 +55,7 @@ func (s *Service) List(w http.ResponseWriter) {
 		return
 	}
 
+	fmt.Println(r.Method, r.Host ,r.RequestURI)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 
@@ -78,11 +80,28 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		server.InternalServerError(w)
 		return
 	}
+
+	fmt.Println(r.Method, r.Host ,r.RequestURI)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 
 }
 
 func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
-	s.Repository.Create(w,r)
+	var i Item
+
+	if err := json.NewDecoder(r.Body).Decode(&i); err != nil {
+		server.InternalServerError(w)
+		return
+	}
+
+	jsonBytes, err := s.Repository.Create(i)
+	if err != nil {
+		server.InternalServerError(w)
+		return
+	}
+
+	fmt.Println(r.Method, r.Host ,r.RequestURI)
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonBytes)
 }

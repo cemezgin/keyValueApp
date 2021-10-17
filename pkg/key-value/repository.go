@@ -2,10 +2,7 @@ package key_value
 
 import (
 	"encoding/json"
-	"net/http"
 	"sync"
-
-	"github.com/cemezgn/keyValueApp/pkg/server"
 )
 
 type Repository struct {
@@ -43,20 +40,12 @@ func (rp *Repository) Get(value string) (Item, bool) {
 	return u, ok
 }
 
-func (rp *Repository) Create(w http.ResponseWriter, r *http.Request) {
-	var i Item
-	if err := json.NewDecoder(r.Body).Decode(&i); err != nil {
-		server.InternalServerError(w)
-		return
-	}
+func (rp *Repository) Create(i Item) ([]byte, error){
+
 	rp.Store.Lock()
 	rp.Store.M[i.Key] = i
 	rp.Store.Unlock()
 	jsonBytes, err := json.Marshal(i)
-	if err != nil {
-		server.InternalServerError(w)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(jsonBytes)
+
+	return jsonBytes, err
 }
