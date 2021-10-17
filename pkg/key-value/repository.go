@@ -49,3 +49,13 @@ func (rp *Repository) Create(i Item) ([]byte, error){
 
 	return jsonBytes, err
 }
+
+
+func (rp *Repository) Flush() {
+
+	rp.Store.Lock()
+	for k := range rp.Store.M {
+		delete(rp.Store.M, k)
+	}
+	rp.Store.Unlock()
+}

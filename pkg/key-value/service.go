@@ -23,6 +23,7 @@ type KeyValueRepository interface {
 	List() ([]byte, error)
 	Get(value string) (Item, bool)
 	Create(i Item) ([]byte, error)
+	Flush()
 }
 
 func NewService(repository KeyValueRepository) *Service {
@@ -41,6 +42,9 @@ func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case r.Method == http.MethodPost && createKeysRequest.MatchString(r.URL.Path):
 		s.Create(w, r)
 		return
+	case r.Method == http.MethodDelete && createKeysRequest.MatchString(r.URL.Path):
+		s.Flush(w, r)
+		return
 	default:
 		server.NotFound(w)
 		return
@@ -55,7 +59,7 @@ func (s *Service) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Method, r.Host ,r.RequestURI)
+	fmt.Println(r.Method, r.Host, r.RequestURI)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 
@@ -81,7 +85,7 @@ func (s *Service) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Method, r.Host ,r.RequestURI)
+	fmt.Println(r.Method, r.Host, r.RequestURI)
 	w.WriteHeader(http.StatusOK)
 	w.Write(jsonBytes)
 
@@ -101,7 +105,13 @@ func (s *Service) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(r.Method, r.Host ,r.RequestURI)
-	w.WriteHeader(http.StatusOK)
+	fmt.Println(r.Method, r.Host, r.RequestURI)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(jsonBytes)
+}
+
+func (s *Service) Flush(w http.ResponseWriter, r *http.Request) {
+	s.Repository.Flush()
+	fmt.Println(r.Method, r.Host, r.RequestURI)
+	w.WriteHeader(http.StatusAccepted)
 }
